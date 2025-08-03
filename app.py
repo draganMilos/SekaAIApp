@@ -26,43 +26,54 @@ import yagmail
 
 st.sidebar.header("Login")
 
+# --- Step 1: Enter Email ---
 if "auth_step" not in st.session_state:
     st.session_state.auth_step = "email_input"
+if "verification_code" not in st.session_state:
+    st.session_state.verification_code = None
+if "entered_email" not in st.session_state:
+    st.session_state.entered_email = None
 
 if st.session_state.auth_step == "email_input":
-    entered_email = st.sidebar.text_input("Enter your email to continue")
-    if st.sidebar.button("Send Code") and entered_email:
-        # Generate code
-        code = str(random.randint(100000, 999999))
-        st.session_state.verification_code = code
-        st.session_state.entered_email = entered_email
+    email_input = st.sidebar.text_input("Enter your email", key="email_input")
 
-        try:
-            yag = yagmail.SMTP(st.secrets["EMAIL_SENDER"], st.secrets["EMAIL_PASSWORD"])
-            yag.send(
-                to=entered_email,
-                subject="Your Seka Invite App Login Code",
-                contents=f"Your login code is: {code}"
-            )
-            st.success(f"A verification code has been sent to {entered_email}")
-            st.session_state.auth_step = "code_input"
-        except Exception as e:
-            st.error("Failed to send email. Check your email credentials.")
+    if st.sidebar.button("Send Code"):
+        if email_input:
+            code = str(random.randint(100000, 999999))
+            st.session_state.verification_code = code
+            st.session_state.entered_email = email_input
 
+            try:
+                yag = yagmail.SMTP(st.secrets["EMAIL_SENDER"], st.secrets["EMAIL_PASSWORD"])
+                yag.send(
+                    to=email_input,
+                    subject="Your Login Code for Seka App",
+                    contents=f"Your 6-digit login code is: {code}"
+                )
+                st.success(f"Verification code sent to {email_input}")
+                st.session_state.auth_step = "code_input"
+            except Exception as e:
+                st.error("❌ Failed to send email. Check email credentials.")
+
+# --- Step 2: Enter Code ---
 elif st.session_state.auth_step == "code_input":
-    user_code = st.sidebar.text_input("Enter the code sent to your email")
+    st.sidebar.write(f"Email: {st.session_state.entered_email}")
+    code_entered = st.sidebar.text_input("Enter the 6-digit code", max_chars=6)
+
     if st.sidebar.button("Verify"):
-        if user_code == st.session_state.verification_code:
+        if code_entered == st.session_state.verification_code:
             st.session_state.user_email = st.session_state.entered_email
             st.session_state.auth_step = "authenticated"
+            st.success("✅ Login successful!")
         else:
             st.error("Incorrect code. Please try again.")
 
-# Stop app unless authenticated
+# --- STOP unless fully authenticated ---
 if st.session_state.auth_step != "authenticated":
     st.stop()
 
 user_email = st.session_state.user_email
+
 
 
 # --- Connect to Google Sheet ---
