@@ -6,7 +6,7 @@ import json
 import os
 import re
 
-# Setup Google Sheets auth
+# --- Setup Google Sheets auth ---
 def connect_to_gsheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
@@ -14,53 +14,76 @@ def connect_to_gsheet():
     client = gspread.authorize(creds)
     return client
 
+# --- Email validation helper ---
+def is_valid_email(email):
+    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    return re.match(pattern, email.strip()) is not None
 
-# User login (basic email input for now)
+# --- User login ---
 st.sidebar.header("Login")
 user_email = st.sidebar.text_input("Enter your email to continue")
 
 if not user_email:
     st.stop()
 
-# Connect to Google Sheet
+# --- Connect to Google Sheet ---
 gc = connect_to_gsheet()
-sheet = gc.open_by_key("1gcryrWnWlEt2gN3v1cCWz7QXDJat0_qfkJB37kkm3Oc").sheet1  # Change name to match your sheet
+sheet = gc.open_by_key("1gcryrWnWlEt2gN3v1cCWz7QXDJat0_qfkJB37kkm3Oc").sheet1
 all_data = sheet.get_all_records()
 
-# Filter only user's rows
+# --- Filter only this user's data ---
 df = pd.DataFrame(all_data)
 if "UserID" in df.columns:
     user_df = df[df['UserID'] == user_email]
 else:
     user_df = pd.DataFrame(columns=["UserID", "Email", "Project", "Tags", "Teams"])
 
-
-# Display user data
+# --- Display data ---
 st.subheader(f"Welcome, {user_email}")
 st.write("Here’s your saved data:")
 st.dataframe(user_df)
 
-
-# --- Email validation helper ---
-def is_valid_email(email):
-    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-    return re.match(pattern, email.strip()) is not None
-
-# --- Initialize session state ---
-if "data" not in st.session_state:
-    new_rows = [{
-    "UserID": user_email,
-    "Email": email,
-    "Project": ", ".join(projects),
-    "Tags": ", ".join(tags),
-    "Teams": ", ".join(teams),
-} for email in emails]
-
-for row in new_rows:
-    sheet.append_row(list(row.values()))
-
-
+# --- Email & Invite Assistant UI ---
 st.title("📨 Email & Invite Assistant")
+
+st.markdown("""
+💡 **Tips:**  
+- You can add multiple emails separated by commas  
+- Projects, tags, and teams can also be comma-separated
+""")
+
+with st.form("add_entry"):
+    emails_input = st.text_input("Email(s)")
+    projects_input = st.text_input("Project(s)")
+    tags_input = st.text_input("Tags")
+    teams_input = st.text_input("Teams")
+    submitted = st.form_submit_button("Add Entry")
+
+    if submitted:
+        emails = [e.strip() for e in emails_input.split(",") if e.strip()]
+        projects = [p.strip() for p in projects_input.split(",") if p.strip()]
+        tags = [t.strip() for t in tags_input.split(",") if t.strip()]
+        teams = [t.strip() for t in teams_input.split(",") if t.strip()]
+
+        invalid_emails = [e for e in emails if not is_valid_email(e)]
+
+        if invalid_emails:
+            st.error(f"Invalid email(s): {', '.join(invalid_emails)}")
+        elif not emails:
+            st.warning("Please enter at least one valid email.")
+        else:
+            new_rows = [{
+                "UserID": user_email,
+                "Email": email,
+                "Project": ", ".join(projects),
+                "Tags": ", ".join(tags),
+                "Teams": ", ".join(teams),
+            } for email in emails]
+
+            for row in new_rows:
+                sheet.append_row(list(row.values()))
+            st.success(f"Added {len(emails)} contact(s) to your Google Sheet.")
+
 
 # --- Section 1: Import Data ---
 st.header("1. Import Data")
