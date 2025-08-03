@@ -25,24 +25,24 @@ import streamlit as st
 import random
 import yagmail
 
-# --- Initialize session state ---
+# --- Init session state ---
 if "auth_step" not in st.session_state:
     st.session_state.auth_step = "email_input"
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 if "verification_code" not in st.session_state:
     st.session_state.verification_code = ""
-if "code_entered" not in st.session_state:
-    st.session_state.code_entered = ""
+if "verified" not in st.session_state:
+    st.session_state.verified = False
 
-# --- Sidebar Login ---
+# --- Sidebar login ---
 st.sidebar.header("🔐 Login")
 
+# 1. STEP: ENTER EMAIL
 if st.session_state.auth_step == "email_input":
-    st.sidebar.text_input("Enter your email", key="user_email_input")
+    email_input = st.sidebar.text_input("Enter your email", key="email_input_key")
 
     if st.sidebar.button("Send Code"):
-        email_input = st.session_state.user_email_input.strip()
         if email_input:
             st.session_state.user_email = email_input
             st.session_state.verification_code = str(random.randint(100000, 999999))
@@ -55,20 +55,31 @@ if st.session_state.auth_step == "email_input":
                     contents=f"Your Seka App login code is: {st.session_state.verification_code}"
                 )
                 st.session_state.auth_step = "code_input"
-                st.sidebar.success(f"✅ Code sent to {email_input}")
+                st.rerun()
             except Exception as e:
                 st.sidebar.error("❌ Failed to send email. Check credentials.")
 
+# 2. STEP: ENTER CODE
 elif st.session_state.auth_step == "code_input":
-    st.sidebar.markdown(f"📧 Code sent to: **{st.session_state.user_email}**")
-    st.sidebar.text_input("Enter the 6-digit code", max_chars=6, key="code_entered")
+    st.sidebar.success(f"✅ Code sent to {st.session_state.user_email}")
+    code_input = st.sidebar.text_input("Enter the 6-digit code", key="code_input_key")
 
-    if st.sidebar.button("Verify"):
-        if st.session_state.code_entered == st.session_state.verification_code:
+    if st.sidebar.button("Verify Code"):
+        if code_input == st.session_state.verification_code:
             st.session_state.auth_step = "authenticated"
+            st.session_state.verified = True
             st.sidebar.success("✅ Login successful!")
+            st.rerun()
         else:
-            st.sidebar.error("❌ Invalid code. Try again.")
+            st.sidebar.error("❌ Invalid code. Please try again.")
+
+# BLOCK access to rest of app until verified
+if not st.session_state.verified:
+    st.stop()
+
+# --- CONTINUE with authenticated user ---
+user_email = st.session_state.user_email
+
 
 # --- STOP here unless authenticated ---
 if st.session_state.auth_step != "authenticated":
