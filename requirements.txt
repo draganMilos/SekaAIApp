@@ -1,11 +1,7 @@
 streamlit
 pandas
-ics
-streamlit
-pandas
 gspread
 oauth2client
+ics
 smtplib
 email-validator
-gspread
-oauth2client
