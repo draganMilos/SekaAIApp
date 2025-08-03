@@ -1,3 +1,9 @@
 streamlit
 pandas
 ics
+streamlit
+pandas
+gspread
+oauth2client
+smtplib
+email-validator
