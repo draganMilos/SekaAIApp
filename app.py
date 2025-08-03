@@ -24,7 +24,7 @@ if not user_email:
 
 # Connect to Google Sheet
 gc = connect_to_gsheet()
-sheet = gc.open("Seka Invite App").sheet1  # Change name to match your sheet
+sheet = gc.open_by_key("1gcryrWnWlEt2gN3v1cCWz7QXDJat0_qfkJB37kkm3Oc").sheet1  # Change name to match your sheet
 all_data = sheet.get_all_records()
 
 # Filter only user's rows
