@@ -90,35 +90,29 @@ st.header("2. Filter Contacts")
 
 if not user_df.empty:
     all_projects = sorted(set(
-    p.strip()
-    for p_list in user_df['Project'].dropna()
-    for p in str(p_list).split(",")
-))
-
-all_teams = sorted(set(
-    t.strip()
-    for t_list in user_df['Teams'].dropna()
-    for t in str(t_list).split(",")
-))
-
-  
-
-all_tags = sorted(set(
-    t.strip()
-    for t_list in user_df['Tags'].dropna()
-    for t in str(t_list).split(",")
-))
-
- 
+        p.strip()
+        for p_list in user_df['Project'].dropna()
+        for p in str(p_list).split(",")
+    ))
+    all_tags = sorted(set(
+        t.strip()
+        for t_list in user_df['Tags'].dropna()
+        for t in str(t_list).split(",")
+    ))
+    all_teams = sorted(set(
+        t.strip()
+        for t_list in user_df['Teams'].dropna()
+        for t in str(t_list).split(",")
+    ))
 
     selected_projects = st.multiselect("Filter by Project(s)", options=all_projects)
     selected_tags = st.multiselect("Filter by Tag(s)", options=all_tags)
     selected_teams = st.multiselect("Filter by Team(s)", options=all_teams)
 
     def match_filter(row):
-        matches_project = any(p.strip() in row['Project'] for p in selected_projects) if selected_projects else True
-        matches_tag = any(t.strip() in row['Tags'] for t in selected_tags) if selected_tags else True
-        matches_team = any(t.strip() in row['Teams'] for t in selected_teams) if selected_teams else True
+        matches_project = any(p.strip() in str(row['Project']) for p in selected_projects) if selected_projects else True
+        matches_tag = any(t.strip() in str(row['Tags']) for t in selected_tags) if selected_tags else True
+        matches_team = any(t.strip() in str(row['Teams']) for t in selected_teams) if selected_teams else True
         return matches_project and matches_tag and matches_team
 
     filtered_df = user_df[user_df.apply(match_filter, axis=1)]
@@ -148,7 +142,7 @@ with col1:
         st.markdown(f"[Click to open email draft]({mailto_link})")
 
 with col2:
-    st.markdown("### 📅 Download Calendar Invite")
+    st.markdown("### 🗕️ Download Calendar Invite")
     title = st.text_input("Event Title", "Team Sync")
     location = st.text_input("Location", "Zoom or Office")
     start_date = st.date_input("Start Date")
