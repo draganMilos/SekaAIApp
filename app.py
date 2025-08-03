@@ -21,11 +21,49 @@ def is_valid_email(email):
     return re.match(pattern, email.strip()) is not None
 
 # --- User login ---
-st.sidebar.header("Login")
-user_email = st.sidebar.text_input("Enter your email to continue")
+import random
+import yagmail
 
-if not user_email:
+st.sidebar.header("Login")
+
+if "auth_step" not in st.session_state:
+    st.session_state.auth_step = "email_input"
+
+if st.session_state.auth_step == "email_input":
+    entered_email = st.sidebar.text_input("Enter your email to continue")
+    if st.sidebar.button("Send Code") and entered_email:
+        # Generate code
+        code = str(random.randint(100000, 999999))
+        st.session_state.verification_code = code
+        st.session_state.entered_email = entered_email
+
+        try:
+            yag = yagmail.SMTP(st.secrets["EMAIL_SENDER"], st.secrets["EMAIL_PASSWORD"])
+            yag.send(
+                to=entered_email,
+                subject="Your Seka Invite App Login Code",
+                contents=f"Your login code is: {code}"
+            )
+            st.success(f"A verification code has been sent to {entered_email}")
+            st.session_state.auth_step = "code_input"
+        except Exception as e:
+            st.error("Failed to send email. Check your email credentials.")
+
+elif st.session_state.auth_step == "code_input":
+    user_code = st.sidebar.text_input("Enter the code sent to your email")
+    if st.sidebar.button("Verify"):
+        if user_code == st.session_state.verification_code:
+            st.session_state.user_email = st.session_state.entered_email
+            st.session_state.auth_step = "authenticated"
+        else:
+            st.error("Incorrect code. Please try again.")
+
+# Stop app unless authenticated
+if st.session_state.auth_step != "authenticated":
     st.stop()
+
+user_email = st.session_state.user_email
+
 
 # --- Connect to Google Sheet ---
 gc = connect_to_gsheet()
