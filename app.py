@@ -29,7 +29,11 @@ all_data = sheet.get_all_records()
 
 # Filter only user's rows
 df = pd.DataFrame(all_data)
-user_df = df[df['UserID'] == user_email]
+if "UserID" in df.columns:
+    user_df = df[df['UserID'] == user_email]
+else:
+    user_df = pd.DataFrame(columns=["UserID", "Email", "Project", "Tags", "Teams"])
+
 
 # Display user data
 st.subheader(f"Welcome, {user_email}")
