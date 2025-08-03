@@ -3,5 +3,3 @@ pandas
 gspread
 oauth2client
 ics
-smtplib
-email-validator
