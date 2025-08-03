@@ -7,3 +7,5 @@ gspread
 oauth2client
 smtplib
 email-validator
+gspread
+oauth2client
