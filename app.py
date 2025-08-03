@@ -25,21 +25,24 @@ import streamlit as st
 import random
 import yagmail
 
-# --- SESSION STATE SETUP ---
+# --- Initialize session state ---
 if "auth_step" not in st.session_state:
     st.session_state.auth_step = "email_input"
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 if "verification_code" not in st.session_state:
     st.session_state.verification_code = ""
+if "code_entered" not in st.session_state:
+    st.session_state.code_entered = ""
 
-# --- SIDEBAR LOGIN LOGIC ---
+# --- Sidebar Login ---
 st.sidebar.header("🔐 Login")
 
 if st.session_state.auth_step == "email_input":
-    email_input = st.sidebar.text_input("Enter your email")
+    st.sidebar.text_input("Enter your email", key="user_email_input")
 
     if st.sidebar.button("Send Code"):
+        email_input = st.session_state.user_email_input.strip()
         if email_input:
             st.session_state.user_email = email_input
             st.session_state.verification_code = str(random.randint(100000, 999999))
@@ -57,21 +60,21 @@ if st.session_state.auth_step == "email_input":
                 st.sidebar.error("❌ Failed to send email. Check credentials.")
 
 elif st.session_state.auth_step == "code_input":
-    st.sidebar.write(f"Email: {st.session_state.user_email}")
-    code_entered = st.sidebar.text_input("Enter the 6-digit code")
+    st.sidebar.markdown(f"📧 Code sent to: **{st.session_state.user_email}**")
+    st.sidebar.text_input("Enter the 6-digit code", max_chars=6, key="code_entered")
 
     if st.sidebar.button("Verify"):
-        if code_entered == st.session_state.verification_code:
+        if st.session_state.code_entered == st.session_state.verification_code:
             st.session_state.auth_step = "authenticated"
             st.sidebar.success("✅ Login successful!")
         else:
             st.sidebar.error("❌ Invalid code. Try again.")
 
-# --- STOP UNLESS AUTHENTICATED ---
+# --- STOP here unless authenticated ---
 if st.session_state.auth_step != "authenticated":
     st.stop()
 
-# --- Now user is authenticated ---
+# --- User is now logged in ---
 user_email = st.session_state.user_email
 
 
