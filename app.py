@@ -85,8 +85,13 @@ filtered_df = st.session_state.data[st.session_state.data.apply(match_filter, ax
 st.subheader("Filtered Emails")
 st.write(filtered_df)
 
-emails = filtered_df['Email'].tolist()
+emails = filtered_df['Email'].tolist() if 'Email' in filtered_df.columns else []
+
 email_list_str = ", ".join(emails)
+
+if filtered_df.empty:
+    st.warning("⚠️ No matching contacts found for the selected filters.")
+
 
 # --- Section 3: Action ---
 st.header("3. Actions")
