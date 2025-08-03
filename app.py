@@ -129,7 +129,8 @@ with st.form("add_email"):
 
 # --- Display Data Table ---
 st.subheader("Current Data")
-st.dataframe(st.session_state.data, use_container_width=True)
+st.dataframe(user_df, use_container_width=True)
+
 
 
 
