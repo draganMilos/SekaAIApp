@@ -1,6 +1,41 @@
 import streamlit as st
 import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
+import os
 import re
+
+# Setup Google Sheets auth
+def connect_to_gsheet():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+    return client
+
+
+# User login (basic email input for now)
+st.sidebar.header("Login")
+user_email = st.sidebar.text_input("Enter your email to continue")
+
+if not user_email:
+    st.stop()
+
+# Connect to Google Sheet
+gc = connect_to_gsheet()
+sheet = gc.open("Seka Invite App").sheet1  # Change name to match your sheet
+all_data = sheet.get_all_records()
+
+# Filter only user's rows
+df = pd.DataFrame(all_data)
+user_df = df[df['UserID'] == user_email]
+
+# Display user data
+st.subheader(f"Welcome, {user_email}")
+st.write("Here’s your saved data:")
+st.dataframe(user_df)
+
 
 # --- Email validation helper ---
 def is_valid_email(email):
@@ -9,7 +44,17 @@ def is_valid_email(email):
 
 # --- Initialize session state ---
 if "data" not in st.session_state:
-    st.session_state.data = pd.DataFrame(columns=["Email", "Project", "Tags", "Teams"])
+    new_rows = [{
+    "UserID": user_email,
+    "Email": email,
+    "Project": ", ".join(projects),
+    "Tags": ", ".join(tags),
+    "Teams": ", ".join(teams),
+} for email in emails]
+
+for row in new_rows:
+    sheet.append_row(list(row.values()))
+
 
 st.title("📨 Email & Invite Assistant")
 
