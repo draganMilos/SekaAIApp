@@ -89,9 +89,27 @@ with st.form("add_entry"):
 st.header("2. Filter Contacts")
 
 if not user_df.empty:
-    all_projects = sorted(set(p.strip() for p_list in user_df['Project'].dropna() for p in p_list.split(",")))
-    all_tags = sorted(set(t.strip() for t_list in user_df['Tags'].dropna() for t in t_list.split(",")))
-    all_teams = sorted(set(t.strip() for t_list in user_df['Teams'].dropna() for t in t_list.split(",")))
+    all_projects = sorted(set(
+    p.strip()
+    for p_list in user_df['Project'].dropna()
+    for p in str(p_list).split(",")
+))
+
+all_teams = sorted(set(
+    t.strip()
+    for t_list in user_df['Teams'].dropna()
+    for t in str(t_list).split(",")
+))
+
+  
+
+all_tags = sorted(set(
+    t.strip()
+    for t_list in user_df['Tags'].dropna()
+    for t in str(t_list).split(",")
+))
+
+ 
 
     selected_projects = st.multiselect("Filter by Project(s)", options=all_projects)
     selected_tags = st.multiselect("Filter by Tag(s)", options=all_tags)
